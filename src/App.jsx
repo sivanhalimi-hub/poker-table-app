@@ -15,9 +15,7 @@ function AppRoutes() {
 
   return (
     <Routes>
-      {/* Table page is public - anyone can view */}
       <Route path="/table/:id" element={<TablePage />} />
-      {/* Home requires login */}
       <Route path="/" element={user ? <HomePage /> : <AuthPage />} />
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>
@@ -26,10 +24,10 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
+    <AuthProvider>
+      <BrowserRouter>
         <AppRoutes />
-      </AuthProvider>
-    </BrowserRouter>
+      </BrowserRouter>
+    </AuthProvider>
   )
 }
