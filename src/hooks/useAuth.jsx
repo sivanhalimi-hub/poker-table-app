@@ -13,8 +13,15 @@ export function AuthProvider({ children }) {
       setLoading(false)
     })
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Auth event:', event, session)
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        setUser(session?.user ?? null)
+      }
+      if (event === 'SIGNED_OUT') {
+        setUser(null)
+      }
+      setLoading(false)
     })
 
     return () => subscription.unsubscribe()
@@ -23,12 +30,21 @@ export function AuthProvider({ children }) {
   const signInWithGoogle = () =>
     supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: 'https://poker-table-app.vercel.app' }
+      options: {
+        redirectTo: 'https://poker-table-app.vercel.app',
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'consent',
+        }
+      }
+    })
 
   const signInWithFacebook = () =>
     supabase.auth.signInWithOAuth({
       provider: 'facebook',
-      options: { redirectTo: 'https://poker-table-app.vercel.app' }
+      options: {
+        redirectTo: 'https://poker-table-app.vercel.app'
+      }
     })
 
   const signOut = () => supabase.auth.signOut()
