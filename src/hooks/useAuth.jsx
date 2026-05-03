@@ -23,13 +23,12 @@ export function AuthProvider({ children }) {
   const signInWithGoogle = () =>
     supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: window.location.origin }
-    })
+      options: { redirectTo: 'https://poker-table-app.vercel.app' }
 
   const signInWithFacebook = () =>
     supabase.auth.signInWithOAuth({
       provider: 'facebook',
-      options: { redirectTo: window.location.origin }
+      options: { redirectTo: 'https://poker-table-app.vercel.app' }
     })
 
   const signOut = () => supabase.auth.signOut()
