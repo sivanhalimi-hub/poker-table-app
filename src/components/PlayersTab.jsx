@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 
 const COLORS = ['#dc2626','#d97706','#16a34a','#2563eb','#7c3aed','#db2777','#0891b2','#65a30d','#f97316','#84cc16']
 
-export default function PlayersTab({ tableId, players, sessions, isOwner, onRefresh }) {
+export default function PlayersTab({ tableId, players, sessions, canEdit, onRefresh }) {
   const [showForm, setShowForm] = useState(false)
   const [editPlayer, setEditPlayer] = useState(null)
   const [form, setForm] = useState({ name: '', color: COLORS[0] })
@@ -51,7 +51,7 @@ export default function PlayersTab({ tableId, players, sessions, isOwner, onRefr
 
   return (
     <div>
-      {isOwner && (
+      {canEdit && (
         <button className="btn btn-red btn-block" style={{ marginBottom: 14 }} onClick={openNew}>
           + הוסף שחקן
         </button>
@@ -78,7 +78,7 @@ export default function PlayersTab({ tableId, players, sessions, isOwner, onRefr
               <span className={`badge ${st.profit > 0 ? 'badge-green' : st.profit < 0 ? 'badge-red' : 'badge-gold'}`}>
                 {st.profit > 0 ? '+' : ''}₪{st.profit.toLocaleString()}
               </span>
-              {isOwner && (
+              {canEdit && (
                 <div style={{ display: 'flex', gap: 6 }}>
                   <button className="btn btn-ghost" style={{ padding: '4px 10px', fontSize: 12 }} onClick={() => openEdit(p)}>✎</button>
                   <button className="btn btn-ghost" style={{ padding: '4px 10px', fontSize: 12, color: '#f87171' }} onClick={() => deletePlayer(p.id)}>✕</button>

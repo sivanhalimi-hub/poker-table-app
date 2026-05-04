@@ -30,6 +30,7 @@ export default function TablePage() {
   const [tableName, setTableName] = useState('')
 
   const isOwner = user?.id === table?.owner_id
+  const canEdit = !!user  // anyone logged in can manage players/sessions/expenses
 
   const fetchAll = useCallback(async () => {
     const [tbl, plrs, sess, exp] = await Promise.all([
@@ -86,7 +87,7 @@ export default function TablePage() {
   const totalProfit = sessions.reduce((s, x) => s + (x.profit || 0), 0)
   const totalHours = sessions.reduce((s, x) => s + (x.hours || 0), 0)
 
-  const tabProps = { tableId: id, players, sessions, expenses, isOwner, onRefresh: fetchAll }
+  const tabProps = { tableId: id, players, sessions, expenses, canEdit, onRefresh: fetchAll }
 
   return (
     <div className="page">

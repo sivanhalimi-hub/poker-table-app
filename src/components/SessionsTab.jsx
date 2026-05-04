@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 
-export default function SessionsTab({ tableId, players, sessions, isOwner, onRefresh }) {
+export default function SessionsTab({ tableId, players, sessions, canEdit, onRefresh }) {
   const [showForm, setShowForm] = useState(false)
   const [editSession, setEditSession] = useState(null)
   const [form, setForm] = useState({ player_id: '', date: today(), buy_in: '', cash_out: '', hours: '', notes: '' })
@@ -54,7 +54,7 @@ export default function SessionsTab({ tableId, players, sessions, isOwner, onRef
 
   return (
     <div>
-      {isOwner && (
+      {canEdit && (
         <button className="btn btn-red btn-block" style={{ marginBottom: 14 }} onClick={openNew}>
           + הוסף סשן
         </button>
@@ -91,7 +91,7 @@ export default function SessionsTab({ tableId, players, sessions, isOwner, onRef
               </div>
             </div>
             {s.notes && <div style={{ marginTop: 8, fontSize: 12, color: 'var(--text-muted)', borderTop: '1px solid var(--border)', paddingTop: 8 }}>{s.notes}</div>}
-            {isOwner && (
+            {canEdit && (
               <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
                 <button className="btn btn-ghost" style={{ fontSize: 12, padding: '5px 12px' }} onClick={() => openEdit(s)}>✎ עריכה</button>
                 <button className="btn btn-ghost" style={{ fontSize: 12, padding: '5px 12px', color: '#f87171' }} onClick={() => deleteSession(s.id)}>✕ מחק</button>

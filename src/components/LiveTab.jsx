@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 
-export default function LiveTab({ tableId, players, sessions, isOwner, table, onRefresh }) {
+export default function LiveTab({ tableId, players, sessions, canEdit, table, onRefresh }) {
   const [startTime, setStartTime] = useState(table.live_start ? new Date(table.live_start) : null)
   const [elapsed, setElapsed] = useState('00:00')
   const [stacks, setStacks] = useState({})
@@ -72,7 +72,7 @@ export default function LiveTab({ tableId, players, sessions, isOwner, table, on
               {elapsed}
             </div>
             <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>שעות:דקות</div>
-            {isOwner && (
+            {canEdit && (
               <button className="btn btn-ghost" style={{ marginTop: 16 }} onClick={endGame}>
                 ⏹ סיים משחק
               </button>
@@ -84,7 +84,7 @@ export default function LiveTab({ tableId, players, sessions, isOwner, table, on
             <div style={{ fontSize: 15, color: 'var(--text-muted)', marginBottom: 16 }}>
               {players.length === 0 ? 'הוסף שחקנים תחילה' : 'אין משחק פעיל כרגע'}
             </div>
-            {isOwner && players.length > 0 && (
+            {canEdit && players.length > 0 && (
               <button className="btn btn-red" style={{ fontSize: 15, padding: '12px 28px' }} onClick={startGame}>
                 ▶ התחל משחק
               </button>
@@ -113,7 +113,7 @@ export default function LiveTab({ tableId, players, sessions, isOwner, table, on
                   <span className={`badge ${totalProfit > 0 ? 'badge-green' : totalProfit < 0 ? 'badge-red' : 'badge-gold'}`}>
                     {totalProfit >= 0 ? '+' : ''}₪{totalProfit.toLocaleString()}
                   </span>
-                  {isLive && isOwner && (
+                  {isLive && canEdit && (
                     <input
                       type="number"
                       placeholder="סטאק"
@@ -126,7 +126,7 @@ export default function LiveTab({ tableId, players, sessions, isOwner, table, on
               </div>
             )
           })}
-          {isLive && isOwner && Object.values(stacks).some(v => v !== '') && (
+          {isLive && canEdit && Object.values(stacks).some(v => v !== '') && (
             <button className="btn btn-green btn-block" style={{ marginTop: 10 }} onClick={saveStacks} disabled={saving}>
               {saving ? 'שומר...' : '💾 עדכן סטאקים'}
             </button>

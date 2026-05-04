@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 
-export default function ExpensesTab({ tableId, players, expenses, isOwner, onRefresh }) {
+export default function ExpensesTab({ tableId, players, expenses, canEdit, onRefresh }) {
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ description: '', amount: '', paid_by: '' })
   const [saving, setSaving] = useState(false)
@@ -35,7 +35,7 @@ export default function ExpensesTab({ tableId, players, expenses, isOwner, onRef
 
   return (
     <div>
-      {isOwner && (
+      {canEdit && (
         <button className="btn btn-gold btn-block" style={{ marginBottom: 14 }} onClick={() => setShowForm(true)}>
           + הוצאה חדשה
         </button>
@@ -71,7 +71,7 @@ export default function ExpensesTab({ tableId, players, expenses, isOwner, onRef
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <span className="badge badge-gold">₪{e.amount.toLocaleString()}</span>
-            {isOwner && (
+            {canEdit && (
               <button className="btn btn-ghost" style={{ padding: '4px 10px', fontSize: 12, color: '#f87171' }} onClick={() => deleteExpense(e.id)}>✕</button>
             )}
           </div>
