@@ -28,9 +28,11 @@ const CHART_OPTS = {
   }
 }
 
-export default function StatsTab({ players, sessions }) {
+export default function StatsTab({ players, sessions: allSessions, onPlayerClick }) {
   const [chartType, setChartType] = useState('bar')
   const [metric, setMetric] = useState('profit')
+  // Exclude live (in-progress) sessions from stats so they don't pollute totals
+  const sessions = useMemo(() => allSessions.filter(s => !s.is_live), [allSessions])
 
   const playerStats = useMemo(() => {
     return players.map(p => {
@@ -102,7 +104,8 @@ export default function StatsTab({ players, sessions }) {
       <div className="card" style={{ marginBottom: 14 }}>
         <div style={{ fontWeight: 700, marginBottom: 14 }}>🏆 טבלת מובילים</div>
         {[...playerStats].sort((a, b) => b.profit - a.profit).map((p, i) => (
-          <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+          <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10, cursor: onPlayerClick ? 'pointer' : 'default' }}
+            onClick={() => onPlayerClick?.(p)}>
             <div style={{ fontSize: 18, width: 28, textAlign: 'center', opacity: i < 3 ? 1 : 0.4 }}>
               {['🥇','🥈','🥉'][i] || `${i+1}.`}
             </div>
@@ -159,7 +162,8 @@ export default function StatsTab({ players, sessions }) {
       <div style={{ fontWeight: 700, marginBottom: 10, marginTop: 4 }}>פירוט לכל שחקן</div>
       {playerStats.map(p => (
         <div key={p.id} className="card" style={{ borderRight: `3px solid ${p.color}` }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12, cursor: onPlayerClick ? 'pointer' : 'default' }}
+            onClick={() => onPlayerClick?.(p)}>
             <div className="avatar" style={{ background: p.color }}>{p.name[0]}</div>
             <div style={{ fontWeight: 700 }}>{p.name}</div>
           </div>

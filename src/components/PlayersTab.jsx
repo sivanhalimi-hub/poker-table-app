@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { useAuth } from '../hooks/useAuth'
 
 const COLORS = ['#dc2626','#d97706','#16a34a','#2563eb','#7c3aed','#db2777','#0891b2','#65a30d','#f97316','#84cc16']
 
-export default function PlayersTab({ tableId, players, sessions, canEdit, onRefresh }) {
+export default function PlayersTab({ tableId, players, sessions, canEdit, onRefresh, onPlayerClick }) {
+  const { user } = useAuth()
   const [showForm, setShowForm] = useState(false)
   const [editPlayer, setEditPlayer] = useState(null)
   const [form, setForm] = useState({ name: '', color: COLORS[0] })
@@ -42,6 +44,22 @@ export default function PlayersTab({ tableId, players, sessions, canEdit, onRefr
     onRefresh()
   }
 
+  async function claimPlayer(p) {
+    if (!user) return
+    if (!confirm(`לקשר את "${p.name}" אליך? רק אתה תוכל להוסיף לעצמך קניות במשחקים חיים.`)) return
+    await supabase.from('players').update({ user_id: user.id }).eq('id', p.id)
+    onRefresh()
+  }
+
+  async function unclaimPlayer(p) {
+    if (!user) return
+    if (!confirm(`לבטל את הקישור שלך מ-"${p.name}"?`)) return
+    await supabase.from('players').update({ user_id: null }).eq('id', p.id)
+    onRefresh()
+  }
+
+  const myClaimedPlayer = players.find(p => p.user_id === user?.id)
+
   function playerStats(pid) {
     const ps = sessions.filter(s => s.player_id === pid)
     const profit = ps.reduce((a, s) => a + (s.profit || 0), 0)
@@ -63,27 +81,47 @@ export default function PlayersTab({ tableId, players, sessions, canEdit, onRefr
         </div>
       ) : players.map(p => {
         const st = playerStats(p.id)
+        const isMine = p.user_id === user?.id
+        const isClaimed = !!p.user_id
+        const canClaim = user && !isClaimed && !myClaimedPlayer
         return (
-          <div key={p.id} className="card" style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-            <div className="avatar" style={{ background: p.color, width: 44, height: 44, fontSize: 18 }}>
+          <div key={p.id} className="card" style={{ display: 'flex', alignItems: 'center', gap: 14, border: isMine ? '1px solid rgba(212,175,55,0.5)' : undefined }}>
+            <div className="avatar" style={{ background: p.color, width: 44, height: 44, fontSize: 18, cursor: onPlayerClick ? 'pointer' : 'default' }}
+              onClick={() => onPlayerClick?.(p)}>
               {p.name[0]}
             </div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 700, fontSize: 16 }}>{p.name}</div>
+            <div style={{ flex: 1, cursor: onPlayerClick ? 'pointer' : 'default', minWidth: 0 }} onClick={() => onPlayerClick?.(p)}>
+              <div style={{ fontWeight: 700, fontSize: 16, color: 'var(--text)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                {p.name}
+                {isMine && <span style={{ fontSize: 11, color: 'var(--gold-light)', fontWeight: 600 }}>★ אתה</span>}
+                {isClaimed && !isMine && <span style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 400 }}>🔒 משויך</span>}
+              </div>
               <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
-                {st.games} משחקים · {st.hours}ש'
+                {st.games} משחקים · {st.hours}ש' · לחץ לפרטים
               </div>
             </div>
             <div style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
               <span className={`badge ${st.profit > 0 ? 'badge-green' : st.profit < 0 ? 'badge-red' : 'badge-gold'}`}>
                 {st.profit > 0 ? '+' : ''}₪{st.profit.toLocaleString()}
               </span>
-              {canEdit && (
-                <div style={{ display: 'flex', gap: 6 }}>
-                  <button className="btn btn-ghost" style={{ padding: '4px 10px', fontSize: 12 }} onClick={() => openEdit(p)}>✎</button>
-                  <button className="btn btn-ghost" style={{ padding: '4px 10px', fontSize: 12, color: '#f87171' }} onClick={() => deletePlayer(p.id)}>✕</button>
-                </div>
-              )}
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                {canClaim && (
+                  <button className="btn btn-gold" style={{ padding: '4px 10px', fontSize: 11 }} onClick={() => claimPlayer(p)}>
+                    זה אני
+                  </button>
+                )}
+                {isMine && (
+                  <button className="btn btn-ghost" style={{ padding: '4px 10px', fontSize: 11 }} onClick={() => unclaimPlayer(p)}>
+                    בטל קישור
+                  </button>
+                )}
+                {canEdit && (
+                  <>
+                    <button className="btn btn-ghost" style={{ padding: '4px 10px', fontSize: 12 }} onClick={() => openEdit(p)}>✎</button>
+                    <button className="btn btn-ghost" style={{ padding: '4px 10px', fontSize: 12, color: '#f87171' }} onClick={() => deletePlayer(p.id)}>✕</button>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         )
