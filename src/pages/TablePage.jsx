@@ -129,6 +129,27 @@ export default function TablePage() {
     setTable(t => ({ ...t, name: tableName }))
   }
 
+  async function shareTable() {
+    const url = window.location.href
+    const codePart = table.code ? `\nקוד: ${table.code}` : ''
+    const shareText = `הצטרף לשולחן הפוקר "${table.name}"${codePart}\n${url}`
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: `שולחן הפוקר - ${table.name}`, text: shareText, url })
+        return
+      } catch (e) {
+        if (e.name === 'AbortError') return // user canceled
+      }
+    }
+    // Fallback: copy to clipboard
+    try {
+      await navigator.clipboard.writeText(shareText)
+      pushToast('success', '✓ הקישור הועתק! הדבק בכל מקום שתרצה')
+    } catch (e) {
+      alert('הקישור: ' + url)
+    }
+  }
+
   if (loading) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
       טוען...
@@ -175,11 +196,19 @@ export default function TablePage() {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 6, flexWrap: 'wrap' }}>
           {table.code && (
-            <span className="table-code" onClick={() => { navigator.clipboard.writeText(table.code); alert('הקוד הועתק: ' + table.code) }} title="לחץ להעתקה">
+            <span className="table-code" onClick={() => { navigator.clipboard.writeText(table.code); pushToast('success', `הקוד ${table.code} הועתק`) }} title="לחץ להעתקה">
               🔑 {table.code}
             </span>
           )}
           {table.is_live && <span className="badge badge-live">● משחק חי</span>}
+          <button
+            onClick={shareTable}
+            className="btn btn-gold"
+            style={{ padding: '5px 12px', fontSize: 12, gap: 4 }}
+            title="שתף שולחן"
+          >
+            🔗 שתף
+          </button>
           <button onClick={() => navigate('/')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 13 }}>
             → כל השולחנות
           </button>
