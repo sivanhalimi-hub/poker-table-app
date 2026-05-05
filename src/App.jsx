@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './hooks/useAuth'
 import AuthPage from './pages/AuthPage'
 import HomePage from './pages/HomePage'
 import TablePage from './pages/TablePage'
+import JoinByCode from './pages/JoinByCode'
 
 function AppRoutes() {
   const { user, loading } = useAuth()
@@ -16,6 +17,7 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/table/:id" element={<TablePage />} />
+      <Route path="/t/:code" element={<JoinByCode />} />
       <Route path="/" element={user ? <HomePage /> : <AuthPage />} />
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>

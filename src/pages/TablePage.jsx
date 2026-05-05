@@ -9,8 +9,10 @@ import StatsTab from '../components/StatsTab'
 import ExpensesTab from '../components/ExpensesTab'
 import PlayerHistoryModal from '../components/PlayerHistoryModal'
 import ToastContainer from '../components/Toast'
+import TableView from '../components/TableView'
 
 const TABS = [
+  { id: 'table', label: '🪑 שולחן' },
   { id: 'live', label: '● חי' },
   { id: 'sessions', label: '📋 סשנים' },
   { id: 'players', label: '👥 שחקנים' },
@@ -26,7 +28,7 @@ export default function TablePage() {
   const [players, setPlayers] = useState([])
   const [sessions, setSessions] = useState([])
   const [expenses, setExpenses] = useState([])
-  const [tab, setTab] = useState('live')
+  const [tab, setTab] = useState('table')
   const [loading, setLoading] = useState(true)
   const [editingName, setEditingName] = useState(false)
   const [tableName, setTableName] = useState('')
@@ -130,23 +132,25 @@ export default function TablePage() {
   }
 
   async function shareTable() {
-    const url = window.location.href
-    const codePart = table.code ? `\nקוד: ${table.code}` : ''
-    const shareText = `הצטרף לשולחן הפוקר "${table.name}"${codePart}\n${url}`
+    // Use the short /t/CODE URL if available
+    const shortUrl = table.code
+      ? `${window.location.origin}/t/${table.code}`
+      : window.location.href
+    const codePart = table.code ? `\nקוד שולחן: ${table.code}` : ''
+    const shareText = `הצטרף לשולחן הפוקר "${table.name}"${codePart}\n${shortUrl}`
     if (navigator.share) {
       try {
-        await navigator.share({ title: `שולחן הפוקר - ${table.name}`, text: shareText, url })
+        await navigator.share({ title: `שולחן הפוקר - ${table.name}`, text: shareText, url: shortUrl })
         return
       } catch (e) {
-        if (e.name === 'AbortError') return // user canceled
+        if (e.name === 'AbortError') return
       }
     }
-    // Fallback: copy to clipboard
     try {
       await navigator.clipboard.writeText(shareText)
-      pushToast('success', '✓ הקישור הועתק! הדבק בכל מקום שתרצה')
+      pushToast('success', '✓ הקישור הועתק!')
     } catch (e) {
-      alert('הקישור: ' + url)
+      alert('הקישור: ' + shortUrl)
     }
   }
 
@@ -242,6 +246,7 @@ export default function TablePage() {
         ))}
       </div>
 
+      {tab === 'table' && <TableView table={table} players={players} sessions={sessions} canEdit={canEdit} user={user} onPlayerClick={setHistoryPlayer} onStartGame={() => setTab('live')} />}
       {tab === 'live' && <LiveTab {...tabProps} table={table} />}
       {tab === 'sessions' && <SessionsTab {...tabProps} />}
       {tab === 'players' && <PlayersTab {...tabProps} />}
