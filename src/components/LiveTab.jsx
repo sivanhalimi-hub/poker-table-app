@@ -16,6 +16,9 @@ export default function LiveTab({ tableId, players, sessions, canEdit, table, on
     buy_in_amount: table.buy_in_amount || 50,
     chips_per_buyin: table.chips_per_buyin || 200,
   })
+  const [newPlayerName, setNewPlayerName] = useState('')
+  const [addingPlayer, setAddingPlayer] = useState(false)
+  const QUICK_COLORS = ['#dc2626','#d97706','#16a34a','#2563eb','#7c3aed','#db2777','#0891b2','#65a30d','#f97316','#84cc16','#facc15','#a855f7']
 
   const buyInAmount = Number(table.buy_in_amount || 50)
   const chipsPerBuyin = Number(table.chips_per_buyin || 200)
@@ -129,6 +132,28 @@ export default function LiveTab({ tableId, players, sessions, canEdit, table, on
     setFinalChips({})
     setSaving(false)
     onRefresh()
+  }
+
+  async function addNewPlayer() {
+    const name = newPlayerName.trim()
+    if (!name) return
+    setAddingPlayer(true)
+    const usedColors = players.map(p => p.color)
+    const color = QUICK_COLORS.find(c => !usedColors.includes(c)) || QUICK_COLORS[players.length % QUICK_COLORS.length]
+    const { data, error } = await supabase
+      .from('players')
+      .insert({ table_id: tableId, name, color })
+      .select()
+      .single()
+    setAddingPlayer(false)
+    if (data) {
+      // auto-select the new player
+      setSelectedPlayers(s => [...s, data.id])
+      setNewPlayerName('')
+      onRefresh()
+    } else if (error) {
+      alert('שגיאה בהוספת שחקן: ' + error.message)
+    }
   }
 
   async function saveSettings() {
@@ -350,6 +375,26 @@ export default function LiveTab({ tableId, players, sessions, canEdit, table, on
               קנייה התחלתית לכל שחקן: ₪{buyInAmount} = {chipsPerBuyin} ג'יטונים<br/>
               בחר את המשתתפים:
             </div>
+            {/* Add new player inline */}
+            {canEdit && (
+              <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
+                <input
+                  value={newPlayerName}
+                  onChange={e => setNewPlayerName(e.target.value)}
+                  placeholder="שם שחקן חדש..."
+                  onKeyDown={e => e.key === 'Enter' && addNewPlayer()}
+                  style={{ flex: 1, fontSize: 13, padding: '7px 10px' }}
+                />
+                <button
+                  className="btn btn-gold"
+                  style={{ fontSize: 12, padding: '6px 12px' }}
+                  onClick={addNewPlayer}
+                  disabled={!newPlayerName.trim() || addingPlayer}
+                >
+                  {addingPlayer ? '...' : '+ הוסף'}
+                </button>
+              </div>
+            )}
             <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
               <button className="btn btn-ghost" style={{ fontSize: 12, padding: '4px 10px' }} onClick={() => setSelectedPlayers(players.map(p => p.id))}>
                 בחר הכל
