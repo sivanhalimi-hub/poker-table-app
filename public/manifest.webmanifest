@@ -1,0 +1,22 @@
+{
+  "name": "שולחן הפוקר",
+  "short_name": "פוקר",
+  "description": "ניהול שולחן פוקר - שחקנים, משחקים, סטטיסטיקות בזמן אמת",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0a1612",
+  "theme_color": "#0e3d28",
+  "lang": "he",
+  "dir": "rtl",
+  "categories": ["games", "lifestyle", "social"],
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

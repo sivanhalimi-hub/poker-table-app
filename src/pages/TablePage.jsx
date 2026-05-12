@@ -4,7 +4,6 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import PlayersTab from '../components/PlayersTab'
 import SessionsTab from '../components/SessionsTab'
-import LiveTab from '../components/LiveTab'
 import StatsTab from '../components/StatsTab'
 import ExpensesTab from '../components/ExpensesTab'
 import PlayerHistoryModal from '../components/PlayerHistoryModal'
@@ -13,8 +12,7 @@ import TableView from '../components/TableView'
 
 const TABS = [
   { id: 'table', label: '🪑 שולחן' },
-  { id: 'live', label: '● חי' },
-  { id: 'sessions', label: '📋 סשנים' },
+  { id: 'sessions', label: '📋 משחקים' },
   { id: 'players', label: '👥 שחקנים' },
   { id: 'expenses', label: '💸 הוצאות' },
   { id: 'stats', label: '📊 גרפים' },
@@ -168,12 +166,46 @@ export default function TablePage() {
 
   const totalProfit = sessions.reduce((s, x) => s + (x.profit || 0), 0)
   const totalHours = sessions.reduce((s, x) => s + (x.hours || 0), 0)
+  // Live game stats: total money in pot + total chips at the table
+  const liveSessionsAll = sessions.filter(s => s.is_live)
+  const liveTotalPot = liveSessionsAll.reduce((a, s) => a + Number(s.buy_in || 0), 0)
+  const buyInAmt = Number(table?.buy_in_amount || 50)
+  const chipsAmt = Number(table?.chips_per_buyin || 200)
+  const liveTotalChips = buyInAmt > 0 ? (liveTotalPot / buyInAmt) * chipsAmt : 0
 
   const tabProps = { tableId: id, players, sessions, expenses, canEdit, onRefresh: fetchAll, onPlayerClick: setHistoryPlayer }
 
   return (
     <div className="page">
-      <div className="app-header">
+      {/* Back button - fixed at top */}
+      <button
+        onClick={() => navigate('/')}
+        style={{
+          position: 'sticky',
+          top: 10,
+          marginTop: 10,
+          marginBottom: -34,
+          zIndex: 10,
+          background: 'rgba(0,0,0,0.6)',
+          backdropFilter: 'blur(10px)',
+          WebkitBackdropFilter: 'blur(10px)',
+          border: '1px solid rgba(212,175,55,0.4)',
+          color: '#fbbf24',
+          padding: '6px 14px 6px 12px',
+          borderRadius: 99,
+          fontSize: 13,
+          fontWeight: 700,
+          cursor: 'pointer',
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 4,
+          boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
+          fontFamily: 'Heebo, sans-serif',
+        }}
+      >
+        → חזור
+      </button>
+      <div className="app-header" style={{ paddingTop: 34 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
           {editingName ? (
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -213,23 +245,22 @@ export default function TablePage() {
           >
             🔗 שתף
           </button>
-          <button onClick={() => navigate('/')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 13 }}>
-            → כל השולחנות
-          </button>
         </div>
       </div>
 
       {/* Quick stats */}
       <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(3,1fr)' }}>
         <div className="stat-box">
-          <div className={`val ${totalProfit > 0 ? 'profit-pos' : totalProfit < 0 ? 'profit-neg' : ''}`}>
-            ₪{Math.abs(totalProfit).toLocaleString()}
+          <div className="val" style={{ color: '#fbbf24' }}>
+            🪙 {Math.round(liveTotalChips).toLocaleString()}
           </div>
-          <div className="lbl">סה"כ {totalProfit >= 0 ? 'רווח' : 'הפסד'}</div>
+          <div className="lbl">{table.is_live ? 'ג\'יטונים בשולחן' : 'אין משחק חי'}</div>
         </div>
         <div className="stat-box">
-          <div className="val">{sessions.length}</div>
-          <div className="lbl">סשנים</div>
+          <div className="val" style={{ color: table.is_live ? '#4ade80' : 'var(--text-muted)' }}>
+            ₪{liveTotalPot.toLocaleString()}
+          </div>
+          <div className="lbl">{table.is_live ? 'סך הכסף בשולחן' : 'קופה ריקה'}</div>
         </div>
         <div className="stat-box">
           <div className="val">{totalHours}ש'</div>
@@ -246,8 +277,7 @@ export default function TablePage() {
         ))}
       </div>
 
-      {tab === 'table' && <TableView table={table} players={players} sessions={sessions} canEdit={canEdit} user={user} onPlayerClick={setHistoryPlayer} onStartGame={() => setTab('live')} />}
-      {tab === 'live' && <LiveTab {...tabProps} table={table} />}
+      {tab === 'table' && <TableView table={table} players={players} sessions={sessions} canEdit={canEdit} user={user} onPlayerClick={setHistoryPlayer} />}
       {tab === 'sessions' && <SessionsTab {...tabProps} />}
       {tab === 'players' && <PlayersTab {...tabProps} />}
       {tab === 'expenses' && <ExpensesTab {...tabProps} />}

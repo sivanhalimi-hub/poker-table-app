@@ -2,15 +2,15 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
+import CreateTableWizard from '../components/CreateTableWizard'
 
 export default function HomePage() {
   const { user, signOut } = useAuth()
   const navigate = useNavigate()
   const [tables, setTables] = useState([])
   const [loading, setLoading] = useState(true)
-  const [showNew, setShowNew] = useState(false)
-  const [newName, setNewName] = useState('')
-  const [creating, setCreating] = useState(false)
+  const [showWizard, setShowWizard] = useState(false)
+  const [showJoin, setShowJoin] = useState(false)
   const [joinCode, setJoinCode] = useState('')
   const [joining, setJoining] = useState(false)
   const [joinError, setJoinError] = useState('')
@@ -29,20 +29,6 @@ export default function HomePage() {
     setLoading(false)
   }
 
-  async function createTable() {
-    if (!newName.trim()) return
-    setCreating(true)
-    const { data } = await supabase
-      .from('tables')
-      .insert({ name: newName.trim(), owner_id: user.id })
-      .select()
-      .single()
-    setCreating(false)
-    setShowNew(false)
-    setNewName('')
-    if (data) navigate(`/table/${data.id}`)
-  }
-
   async function joinByCode() {
     const code = joinCode.trim().toUpperCase().replace(/[\s-]/g, '')
     if (!code) return
@@ -55,7 +41,7 @@ export default function HomePage() {
       .maybeSingle()
     setJoining(false)
     if (error || !data) {
-      setJoinError('קוד לא נמצא. בדוק שהקוד נכון.')
+      setJoinError('הקוד לא נמצא. בדוק שהקוד נכון.')
       return
     }
     navigate(`/table/${data.id}`)
@@ -64,7 +50,6 @@ export default function HomePage() {
   function copyCode(code, e) {
     e.stopPropagation()
     navigator.clipboard.writeText(code)
-    // brief visual feedback would be nice; alert is acceptable for now
   }
 
   const myTables = tables.filter(t => t.owner_id === user?.id)
@@ -87,7 +72,7 @@ export default function HomePage() {
         <div className="card" style={{
           background: 'linear-gradient(135deg, rgba(220,38,38,0.18), rgba(220,38,38,0.05))',
           border: '1px solid rgba(220,38,38,0.45)',
-          marginBottom: 16
+          marginBottom: 14,
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
             <span className="live-dot" />
@@ -106,51 +91,69 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* Quick join by code */}
-      <div className="card" style={{
-        background: 'linear-gradient(135deg, rgba(212,175,55,0.10), rgba(184,134,11,0.05))',
-        border: '1px solid rgba(212,175,55,0.25)',
-        marginBottom: 16,
-      }}>
-        <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 10, fontWeight: 700 }}>
-          🔑 הצטרף לשולחן עם קוד
-        </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <input
-            value={joinCode}
-            onChange={e => { setJoinCode(e.target.value.toUpperCase()); setJoinError('') }}
-            placeholder="ABC123"
-            onKeyDown={e => e.key === 'Enter' && joinByCode()}
-            style={{
-              flex: 1, fontFamily: 'Courier New, monospace',
-              fontSize: 16, letterSpacing: 2, textAlign: 'center', fontWeight: 700,
-              textTransform: 'uppercase'
-            }}
-            maxLength={8}
-          />
-          <button className="btn btn-gold" onClick={joinByCode} disabled={joining || !joinCode.trim()}>
-            {joining ? '...' : 'כנס'}
-          </button>
-        </div>
-        {joinError && (
-          <div style={{ color: '#f87171', fontSize: 12, marginTop: 8, textAlign: 'center' }}>{joinError}</div>
-        )}
+      {/* Two main CTAs */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
+        {/* Create new table */}
+        <button
+          onClick={() => setShowWizard(true)}
+          style={{
+            background: 'linear-gradient(135deg, rgba(220,38,38,0.25), rgba(153,27,27,0.15))',
+            border: '1px solid rgba(220,38,38,0.45)',
+            borderRadius: 18,
+            padding: '24px 14px',
+            cursor: 'pointer',
+            color: '#f0e6d3',
+            transition: 'all 0.2s',
+            textAlign: 'center',
+            fontFamily: 'Heebo, sans-serif',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(220,38,38,0.3)' }}
+          onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none' }}
+        >
+          <div style={{ fontSize: 36, marginBottom: 8 }}>🃏</div>
+          <div style={{ fontWeight: 700, fontSize: 15 }}>שולחן חדש</div>
+          <div style={{ fontSize: 11, color: 'rgba(240,230,211,0.6)', marginTop: 4 }}>
+            שם, שחקנים, סכומי קנייה
+          </div>
+        </button>
+
+        {/* Join by code */}
+        <button
+          onClick={() => setShowJoin(true)}
+          style={{
+            background: 'linear-gradient(135deg, rgba(212,175,55,0.18), rgba(184,134,11,0.10))',
+            border: '1px solid rgba(212,175,55,0.4)',
+            borderRadius: 18,
+            padding: '24px 14px',
+            cursor: 'pointer',
+            color: '#f0e6d3',
+            transition: 'all 0.2s',
+            textAlign: 'center',
+            fontFamily: 'Heebo, sans-serif',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(212,175,55,0.25)' }}
+          onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none' }}
+        >
+          <div style={{ fontSize: 36, marginBottom: 8 }}>🔑</div>
+          <div style={{ fontWeight: 700, fontSize: 15 }}>הצטרף עם קוד</div>
+          <div style={{ fontSize: 11, color: 'rgba(240,230,211,0.6)', marginTop: 4 }}>
+            כניסה לשולחן קיים
+          </div>
+        </button>
       </div>
 
-      {/* My tables header */}
-      <div style={{ marginBottom: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 700 }}>השולחנות שלי</div>
-        <button className="btn btn-red" style={{ padding: '7px 14px', fontSize: 13 }} onClick={() => setShowNew(true)}>
-          + שולחן חדש
-        </button>
+      {/* My tables */}
+      <div style={{ marginBottom: 10, fontSize: 13, color: 'var(--text-muted)', fontWeight: 700 }}>
+        השולחנות שלי
       </div>
 
       {loading ? (
         <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 40 }}>טוען...</div>
       ) : myTables.length === 0 ? (
-        <div className="card" style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 32 }}>
-          <div style={{ fontSize: 32, marginBottom: 10 }}>♠</div>
-          אין לך שולחנות עדיין. צור שולחן ראשון!
+        <div className="card" style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 28 }}>
+          <div style={{ fontSize: 32, marginBottom: 10, opacity: 0.7 }}>♠</div>
+          אין לך עדיין שולחנות.<br/>
+          <span style={{ fontSize: 12, opacity: 0.7 }}>צור שולחן חדש למעלה כדי להתחיל</span>
         </div>
       ) : (
         myTables.map(t => <TableCard key={t.id} table={t} onClick={() => navigate(`/table/${t.id}`)} onCopyCode={copyCode} isOwner />)
@@ -165,30 +168,50 @@ export default function HomePage() {
         </>
       )}
 
-      {/* New table modal */}
-      {showNew && (
-        <div className="modal-overlay" onClick={() => setShowNew(false)}>
-          <div className="modal" onClick={e => e.stopPropagation()}>
-            <h2 style={{ fontFamily: 'Playfair Display', marginBottom: 20 }}>שולחן חדש</h2>
-            <div className="form-group" style={{ marginBottom: 16 }}>
-              <label>שם השולחן</label>
-              <input
-                value={newName}
-                onChange={e => setNewName(e.target.value)}
-                placeholder='למשל: "בית של יוסי"'
-                onKeyDown={e => e.key === 'Enter' && createTable()}
-                autoFocus
-              />
+      {/* Create table wizard */}
+      {showWizard && (
+        <CreateTableWizard
+          user={user}
+          onClose={() => setShowWizard(false)}
+          onCreated={(table) => {
+            setShowWizard(false)
+            fetchTables()
+            navigate(`/table/${table.id}`)
+          }}
+        />
+      )}
+
+      {/* Join by code modal */}
+      {showJoin && (
+        <div className="modal-overlay" onClick={() => setShowJoin(false)}>
+          <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 380 }}>
+            <h2 style={{ fontFamily: 'Playfair Display', marginBottom: 8, textAlign: 'center' }}>
+              🔑 הצטרף עם קוד
+            </h2>
+            <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 16, textAlign: 'center' }}>
+              הזן קוד שולחן שקיבלת מהבעלים
             </div>
-            <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 16 }}>
-              לאחר היצירה תקבל קוד ייחודי לשתף עם השחקנים.<br/>
-              ברירות מחדל: קנייה ₪50 = 200 ג'יטונים (ניתן לשנות בהגדרות).
-            </div>
-            <div style={{ display: 'flex', gap: 10 }}>
-              <button className="btn btn-red" style={{ flex: 1 }} onClick={createTable} disabled={creating}>
-                {creating ? 'יוצר...' : 'צור שולחן'}
+            <input
+              value={joinCode}
+              onChange={e => { setJoinCode(e.target.value.toUpperCase()); setJoinError('') }}
+              placeholder="ABC123"
+              onKeyDown={e => e.key === 'Enter' && joinByCode()}
+              autoFocus
+              style={{
+                fontFamily: 'Courier New, monospace',
+                fontSize: 22, letterSpacing: 4, textAlign: 'center', fontWeight: 700,
+                textTransform: 'uppercase', padding: '12px',
+              }}
+              maxLength={8}
+            />
+            {joinError && (
+              <div style={{ color: '#f87171', fontSize: 12, marginTop: 8, textAlign: 'center' }}>{joinError}</div>
+            )}
+            <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
+              <button className="btn btn-gold" style={{ flex: 1 }} onClick={joinByCode} disabled={joining || !joinCode.trim()}>
+                {joining ? 'מחפש...' : 'כנס'}
               </button>
-              <button className="btn btn-ghost" onClick={() => setShowNew(false)}>ביטול</button>
+              <button className="btn btn-ghost" onClick={() => setShowJoin(false)}>ביטול</button>
             </div>
           </div>
         </div>
@@ -213,7 +236,7 @@ function TableCard({ table, onClick, onCopyCode, isOwner }) {
           <div style={{ fontWeight: 700, fontSize: 16, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{table.name}</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4, flexWrap: 'wrap' }}>
             {table.code && (
-              <span className="table-code" onClick={e => onCopyCode(table.code, e)} title="לחץ להעתקת הקוד">
+              <span className="table-code" onClick={e => onCopyCode(table.code, e)} title="לחץ להעתקה">
                 🔑 {table.code}
               </span>
             )}

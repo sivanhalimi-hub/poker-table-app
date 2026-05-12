@@ -32,7 +32,11 @@ body {
   font-family: 'Heebo', sans-serif;
   direction: rtl;
   min-height: 100vh;
+  /* Use 100dvh so the fixed gradient covers the area when address bar shows/hides on mobile */
+  min-height: 100dvh;
   position: relative;
+  overscroll-behavior-y: none;
+  -webkit-tap-highlight-color: transparent;
 }
 body::before {
   content: '';
@@ -214,8 +218,15 @@ select option { background: #1a0505; }
 .form-group { display: flex; flex-direction: column; gap: 6px; }
 .form-group label { font-size: 13px; color: var(--text-muted); font-weight: 600; }
 
-/* Page wrapper */
-.page { max-width: 860px; margin: 0 auto; padding: 0 14px 80px; }
+/* Page wrapper - with safe area support for mobile (notch, gesture bar) */
+.page {
+  max-width: 860px;
+  margin: 0 auto;
+  padding-left: max(14px, env(safe-area-inset-left));
+  padding-right: max(14px, env(safe-area-inset-right));
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: max(80px, calc(80px + env(safe-area-inset-bottom)));
+}
 
 /* Header */
 .app-header {
